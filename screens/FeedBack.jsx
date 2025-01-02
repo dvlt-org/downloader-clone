@@ -18,8 +18,8 @@ export default function FeedBack({ navigation }) {
     useEffect(() => {
         const loadFont = async () => {
             await Font.loadAsync({
-                "inter-bold": require("../font/Inter_18pt-Bold.ttf"),
-                "inter-medium": require("../font/Inter_18pt-Medium.ttf")
+                "inter-bold": require("../font/inter/Inter_18pt-Bold.ttf"),
+                "inter-medium": require("../font/inter/Inter_18pt-Medium.ttf")
             })
         }
         loadFont()
@@ -66,7 +66,7 @@ export default function FeedBack({ navigation }) {
                         </View>
                         <Text
                             style={{
-                                fontSize: 25,
+                                fontSize: 20,
                                 marginVertical: 10,
                                 fontWeight: "bold",
                                 fontFamily: "inter-medium",

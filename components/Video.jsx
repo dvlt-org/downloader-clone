@@ -1,7 +1,6 @@
-import React, { useEffect } from "react"
+import React from "react"
 import { View, Text, Image, TouchableOpacity } from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome"
-import Micon from "react-native-vector-icons/MaterialIcons"
 
 
 const Video = ({ type }) => {
@@ -54,27 +53,21 @@ const Video = ({ type }) => {
                         marginHorizontal: 0.001,
                         marginVertical: 5,
                     }}>
-                        {
-                            type !== "downloaded" && (
-                                <>
-                                    <Text style={{
-                                        fontSize: 12,
-                                        color: "#000",
-                                        fontWeight: "bold",
-                                    }}>42.12mb</Text>
-                                    <Text style={{
-                                        fontSize: 15,
-                                        marginHorizontal: 5,
+                        <Text style={{
+                            fontSize: 12,
+                            color: "#000",
+                            fontWeight: "bold",
+                        }}>42.12mb</Text>
+                        <Text style={{
+                            fontSize: 15,
+                            marginHorizontal: 5,
 
-                                    }}>/</Text>
-                                    <Text style={{
-                                        fontSize: 12,
-                                        color: "#000",
-                                        fontWeight: "bold",
-                                    }}>21.02mb</Text>
-                                </>
-                            )
-                        }
+                        }}>/</Text>
+                        <Text style={{
+                            fontSize: 12,
+                            color: "#000",
+                            fontWeight: "bold",
+                        }}>21.02mb</Text>
                     </View>
                 </View>
                 <View
@@ -84,46 +77,21 @@ const Video = ({ type }) => {
                         alignItems: "center",
                         marginTop: 5,
                     }}>
-                    {
-                        type !== "downloaded" ? (
-                            <>
-                                <Text
+                    <Text
 
-                                    style={{
-                                        color: "#4361ee",
-                                        fontWeight: "bold"
-                                    }}>42 MB/s
-                                </Text>
-                                <TouchableOpacity
-                                    style={{
-                                        marginLeft: 20,
-                                    }}
-                                    onPress={() => setPaused(!paused)}
-                                >
-                                    <Icon name={paused ? "play" : "pause"} size={20} />
-                                </TouchableOpacity>
-                            </>
-                        ) : (
-                            <View style={{
-                                flexDirection: "row",
-
-                            }}>
-                                <TouchableOpacity
-                                    style={{
-                                    }}
-                                >
-                                    <Micon name="delete" size={25} />
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={{
-                                        marginLeft: 10,
-                                    }}
-                                >
-                                    <Micon name="play-circle-filled" size={25} />
-                                </TouchableOpacity>
-                            </View>
-                        )
-                    }
+                        style={{
+                            color: "#4361ee",
+                            fontWeight: "bold"
+                        }}>42 MB/s
+                    </Text>
+                    <TouchableOpacity
+                        style={{
+                            marginLeft: 20,
+                        }}
+                        onPress={() => setPaused(!paused)}
+                    >
+                        <Icon name={paused ? "play" : "pause"} size={20} />
+                    </TouchableOpacity>
 
                 </View>
             </View>

@@ -1,34 +1,51 @@
+// navigation
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createDrawerNavigator } from "@react-navigation/drawer";
+import Finished from "../screens/Finished";
+import Progress from "../screens/Progress"
+import HomeStack from "../screens/Home";
+
+// componetns & icons
+import FontAwesomeIcons from "react-native-vector-icons/FontAwesome"
+import MaterialIcons from "react-native-vector-icons/MaterialIcons"
 import DrawerContent from "../components/DrawerContent"
-import { createNativeStackNavigator } from "@react-navigation/native-stack"
 
-import Home from "../screens/Home";
-import FeedBack from "../screens/FeedBack"
-import Settings from "../screens/Settings"
-
+// just react
 import React from "react"
-import FolderLock from "../screens/FolderLock";
+
 
 const Drawer = createDrawerNavigator()
-const Stack = createNativeStackNavigator()
+const BottomTab = createBottomTabNavigator()
 
-
-const HomeStack = () => {
+export const HomeBottoms = () => {
     return (
-        <Stack.Navigator
-            screenOptions={() => {
+        <BottomTab.Navigator
+            initialRouteName='Tabs'
+            screenOptions={({ route }) => {
                 return {
+                    tabBarIcon: ({ focused, size, color }) => {
+                        if (route.name == "Home") {
+                            return <MaterialIcons name='backup-table' size={20} color={color} />
+                        } else if (route.name == "Progress") {
+                            return <FontAwesomeIcons name='download' size={20} color={color} />
+                        } else {
+                            return <FontAwesomeIcons name='folder' size={20} color={color} />
+                        }
+                    },
                     headerShown: false
                 }
             }}>
-            <Stack.Screen name="Home" component={Home} />
-            <Stack.Screen name="FeedBack" component={FeedBack} />
-            <Stack.Screen name="Settings" component={Settings}/>
-            <Stack.Screen name="FolderLock" component={FolderLock}/>
-        </Stack.Navigator>
+            <BottomTab.Screen name='Tabs' component={HomeDrawer} listeners={({ navigation }) => {
+                return {
+                    tabPress: () => {
+                    }
+                }
+            }} />
+            <BottomTab.Screen name='Progress' component={Progress} />
+            <BottomTab.Screen name='Finished' component={Finished} />
+        </BottomTab.Navigator>
     )
 }
-
 
 export default function HomeDrawer() {
     return (

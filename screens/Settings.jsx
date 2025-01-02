@@ -5,9 +5,9 @@ import { useState } from "react"
 
 
 export default function Settings({ navigation }) {
+    const [savePassword, setSavePassword] = useState(false)
     const [onlyWifi, setOnlyWifi] = useState(false)
     const [ads, setAds] = useState(false)
-    const [savePassword, setSavePassword] = useState(false)
     return (
         <SafeAreaProvider>
             <SafeAreaView>

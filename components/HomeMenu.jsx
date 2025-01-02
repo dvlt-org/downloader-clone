@@ -6,7 +6,7 @@ export default function HomeMenu() {
     return (
         <View
             style={{
-                width: "100%"
+                width: "100%",
             }}>
             {
                 homeMenuItems.map((items, index) => (
@@ -16,14 +16,15 @@ export default function HomeMenu() {
                         style={{
                             flexDirection: "row",
                             width: "100%",
-                            marginBottom: 10,
-                            alignItems: 'center'
+                            marginBottom: 5,
+                            alignItems: 'center',
+                            padding: 10,
                         }}>
                         <MaterialIcon name={items.iconName} size={27} />
                         <Text style={{
                             color: "#000",
-                            marginLeft: 5,
-                            fontSize: 16,
+                            marginLeft: 10,
+                            fontSize: 17,
                         }}>{items.title}</Text>
                     </TouchableOpacity>
                 ))

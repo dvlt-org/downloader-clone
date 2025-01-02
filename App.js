@@ -7,7 +7,6 @@ import FolderLock from "./screens/FolderLock.jsx"
 import Settings from "./screens/Settings.jsx"
 import FeedBack from "./screens/FeedBack.jsx"
 
-
 import { Provider } from "react-redux"
 import { store } from "./state/store.js"
 

@@ -52,14 +52,16 @@ const injectJs = `
 const host = `http://192.168.100.14:5000`
 
 export default function Home({ navigation }) {
+    const [downloadLoading, setDownloadLoading] = useState(false)
+    const [downloadProgress, setDownloadProgress] = useState(0)
+    const [downloadVideo, setDownloadVideo] = useState([])
+    const [downloadUrl, setDownloadUrl] = useState("")
     const [inputError, setInputError] = useState("")
     const [video, setVideo] = useState(false)
     const [userId, setUserId] = useState('')
     const [view, setView] = useState(false)
     const [menu, setMenu] = useState(false)
     const [title, setTitle] = useState("")
-    const [downloadUrl, setDownloadUrl] = useState()
-    const [downloadLoading, setDownloadLoading] = useState(false)
 
     const triggerCreateQuery = useRef(false)
     const textInputRef = useRef(null)
@@ -99,7 +101,6 @@ export default function Home({ navigation }) {
         }
     }, [triggerCreateQuery, title])
 
-
     const handleMessage = async (event) => {
         const message = event.nativeEvent.data
         if (message !== "paused" && message !== "no-video") {
@@ -127,7 +128,7 @@ export default function Home({ navigation }) {
         }
     }
 
-    const hanldeDownloader = async () => {
+    const handleDownloader = async () => {
         setDownloadLoading(true)
         if (video) {
             try {
@@ -135,43 +136,52 @@ export default function Home({ navigation }) {
                     name: Date.now(),
                     image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ9Gvl-o1u8qzqRu_D5UhHh9_-pczQBMluwaA&s",
                     url: downloadUrl,
-                    user_id: userId,
+                    user_id: userId
                 })
-                console.log(res.data, "from home and file")
+                console.log(res.data)
                 saveFiles(res.data)
+
             } catch (error) {
-                console.log(error, "from file")
+                console.log(error, "download error")
             }
         }
     }
 
     const saveFiles = async (video) => {
         try {
-            console.log(video, "from saveFiles")
-            const fileName = video.name + ".mp4"
-            const result = await FileSystem.downloadAsync(
-                video.downloadUrl,
-                FileSystem.documentDirectory + fileName
-            )
-            console.log(result)
+            if (video) {
+                const fileName = video.name + ".mp4"
+                const downloadingResumble = FileSystem.createDownloadResumable(
+                    video.downloadUrl,
+                    FileSystem.documentDirectory + fileName,
+                    {},
+                    (progress) => {
+                        setDownloadProgress((progress.totalBytesWritten / progress.totalBytesExpectedToWrite) * 100)
+                    }
+                )
 
-            setDownloadLoading(false)
-            const { status } = await MediaLibrary.requestPermissionsAsync()
+                setDownloadLoading(false)
 
-            if (status !== "granted") {
-                console.log("Mediani saqlashga ruxsat berilmadi")
-                return
+
+                const { status } = await MediaLibrary.requestPermissionsAsync()
+                if (status !== "granted") {
+                    console.log("Mediani yuklab olishga ruxsat berilmadi !")
+                    return 0;
+                }
+
+                const { uri } = await downloadingResumble.downloadAsync()
+                console.log(uri)
+                console.log(downloadProgress, "this is progress of downloading !")
+                setDownloadVideo(downloadingResumble)
+
+                const asset = await MediaLibrary.createAssetAsync(uri)
+                await MediaLibrary.createAlbumAsync("Download", asset, false)
+                console.log("file saved to galary", asset)
             }
-
-            const asset = await MediaLibrary.createAssetAsync(result.uri)
-            await MediaLibrary.createAlbumAsync('Download', asset, false);
-            console.log("file saved to galary", asset)
-
         } catch (error) {
             console.log("save error", error)
         }
     }
-
 
     return (
         <SafeAreaProvider>
@@ -234,6 +244,22 @@ export default function Home({ navigation }) {
                                                 }}
                                             />
                                         </TouchableOpacity>
+                                        {
+                                            menu && (
+                                                <View style={{
+                                                    position: "absolute",
+                                                    top: 10,
+                                                    right: 20,
+                                                    width: "200%",
+                                                    padding: 10,
+                                                    backgroundColor: "#e5e5e5",
+                                                    zIndex: 11,
+                                                    borderRadius: 10,
+                                                }}>
+                                                    <HomeMenu />
+                                                </View>
+                                            )
+                                        }
                                         <TouchableOpacity onPress={() => {
                                             setMenu(!menu)
                                         }}>
@@ -244,7 +270,6 @@ export default function Home({ navigation }) {
                                                 marginLeft: 10,
                                             }} />
                                         </TouchableOpacity>
-
                                     </View>
                                 </View>
                                 <View
@@ -535,7 +560,7 @@ export default function Home({ navigation }) {
                                             video
                                             &&
                                             <TouchableOpacity
-                                                onPress={hanldeDownloader}>
+                                                onPress={handleDownloader}>
                                                 <View
                                                     style={{
                                                         width: 50,

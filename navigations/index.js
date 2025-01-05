@@ -12,6 +12,7 @@ import DrawerContent from "../components/DrawerContent"
 
 // just react
 import React from "react"
+import HomeView from "../screens/View";
 
 
 const Drawer = createDrawerNavigator()
@@ -35,12 +36,7 @@ export const HomeBottoms = () => {
                     headerShown: false
                 }
             }}>
-            <BottomTab.Screen name='Tabs' component={HomeDrawer} listeners={({ navigation }) => {
-                return {
-                    tabPress: () => {
-                    }
-                }
-            }} />
+            <BottomTab.Screen name='Tabs' component={HomeDrawer} />
             <BottomTab.Screen name='Progress' component={Progress} />
             <BottomTab.Screen name='Finished' component={Finished} />
         </BottomTab.Navigator>
@@ -59,6 +55,7 @@ export default function HomeDrawer() {
         }}
             drawerContent={DrawerContent}>
             <Drawer.Screen name="Stack" component={HomeStack} />
+            <Drawer.Screen name="View" component={HomeView} />
         </Drawer.Navigator>
     )
 }

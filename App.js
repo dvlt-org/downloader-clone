@@ -30,7 +30,6 @@ export default function App() {
           <Stack.Screen name="VideoInfo" component={VideoInfo} options={{
             presentation: "formSheet",
             sheetAllowedDetents: "all",
-            headerTitle: "Video Name",
             sheetCornerRadius: 50
           }} />
         </Stack.Navigator>

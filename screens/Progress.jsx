@@ -2,8 +2,12 @@ import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Video from "../components/Video"
 import MaterialIcon from "react-native-vector-icons/MaterialIcons"
+import { useSelector, useDispatch } from "react-redux"
 
 export default function Progress({ navigation }) {
+    const downloadVideos = useSelector(store => store.user.downloadVideos)
+    console.log(downloadVideos, "from progress")
+
     return (
         <SafeAreaView>
             <View style={{
@@ -34,10 +38,13 @@ export default function Progress({ navigation }) {
             <ScrollView style={{
                 marginHorizontal: 10,
             }}>
-                <Video />
-                <Video />
-                <Video />
-                <Video />
+                {
+                    downloadVideos.map((item, index) => {
+                        return (
+                            <Video video={item} key={index}/>
+                        )
+                    })
+                }
             </ScrollView>
         </SafeAreaView>
     );

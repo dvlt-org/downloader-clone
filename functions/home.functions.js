@@ -10,10 +10,9 @@ export const createQuery = async (userId, title) => {
                 name: title,
                 user_id: userId
             })
-            console.log(res.data)
+            console.log("query yaratildi !", res.data)
         } catch (error) {
             console.log("platform click error", error)
         }
     }
 }
-

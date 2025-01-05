@@ -3,8 +3,10 @@ import { View, Text, Image, TouchableOpacity } from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome"
 
 
-const Video = ({ type }) => {
+const Video = ({ type, video }) => {
     const [paused, setPaused] = React.useState(true)
+
+    console.log(video)
 
     return (
         <View style={{

@@ -198,7 +198,8 @@ export default function DrawerContent(navigation) {
                                                 marginLeft: 20,
                                                 fontSize: 17,
                                                 fontWeight: "500",
-                                                width: "70%",
+                                                width: "75%",
+                                                fontFamily: "inter-bold"
                                             }}
                                                 ellipsizeMode="tail"
                                                 numberOfLines={1}

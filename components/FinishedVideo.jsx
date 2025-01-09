@@ -4,7 +4,7 @@ import DotsIcon from "../assets/icons/dots.png"
 import MaterialIcons from "react-native-vector-icons/MaterialIcons"
 import CheckBox from "expo-checkbox"
 import * as FileSystem from "expo-file-system"
-import { getSize } from "../functions/file.functions"
+import { GetSize } from "../functions/file.functions"
 
 
 const host = `http://192.168.100.14:5000`
@@ -22,7 +22,7 @@ const Video = ({ navigation, deleteMenu, handleCheck, id, file }) => {
     console.log("videoDirectory:", videoDirectory)
 
 
-    const size = getSize(videoDirectory)
+    const size = GetSize(videoDirectory)
     size.then((sizeOfFile) => setFileSize((sizeOfFile.size / (1024 * 1024))))
 
     return (

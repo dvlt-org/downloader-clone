@@ -9,7 +9,10 @@ import FolderLock from "../assets/icons/folderLock.png"
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
+import { queryChanging } from "../state/userSlice.js"
+import { DeleteFromDirectory } from "../functions/file.functions.js"
+import * as FileSystem from "expo-file-system"
 
 // constants
 import { host } from '../constants/requests.js'
@@ -19,10 +22,12 @@ export default function Finished({ navigation }) {
     const [selected, setSelected] = useState([])
     const [files, setFiles] = useState([])
 
+    const dispatch = useDispatch()
+
     const userId = useSelector(store => store.user.userId)
-    const queryChanging = useSelector(store => store.user.queryChanging)
+    const queryChangingValue = useSelector(store => store.user.queryChangingValue)
     console.log('%cUserId', userId, 'color: red;');
-    console.log('%cQuery changing', queryChanging, 'color: red;');
+    console.log('%cQuery changing', queryChangingValue, 'color: red;');
 
     useEffect(() => {
         const getFiles = async () => {
@@ -34,15 +39,33 @@ export default function Finished({ navigation }) {
             }
         }
         getFiles()
-    }, [queryChanging])
+    }, [queryChangingValue])
 
     const handleCheck = (check_id, check) => {
         if (!check) {
             setSelected(prev => ([...prev, check_id]))
-        } else if (selected[check_id]) {
+        } else if (selected.includes(check_id)) {
             setSelected(prev => prev.filter(item => item !== check_id))
         }
     }
+
+    const handleDelete = async () => {
+        if (!selected) return 0;
+        try {
+            for (let oneSelected of selected) {
+                const oneSelectedFile = files.filter(file => file._id === oneSelected)
+                console.log("oneSelectedFile:", oneSelectedFile[0].name)
+                const res = await axios.delete(host + "/api/file/" + oneSelected)
+                DeleteFromDirectory(FileSystem.documentDirectory + oneSelectedFile[0].name + ".mp4")
+                console.log("we are venom:", FileSystem.documentDirectory + oneSelectedFile.name + ".mp4")
+            }
+            dispatch(queryChanging(!queryChangingValue))
+        } catch (error) {
+            console.log("delete error:", error)
+        }
+    }
+
+    console.log(files)
 
     return (
         <View>
@@ -58,7 +81,10 @@ export default function Finished({ navigation }) {
                         flexDirection: 'row',
                         justifyContent: "space-between",
                     }}>
-                        {deleteItem && <FontIcon onPress={() => setDeleteItem(false)} name='arrow-left' size={30} />}
+                        {deleteItem && <FontIcon onPress={() => {
+                            setDeleteItem(false)
+                            setSelected([])
+                        }} name='arrow-left' size={30} />}
                         <Text
                             style={{
                                 fontFamily: "inter-medium",
@@ -91,7 +117,8 @@ export default function Finished({ navigation }) {
                                         }} />
                                     </TouchableOpacity>
                                     :
-                                    <TouchableOpacity>
+                                    <TouchableOpacity
+                                        onPress={handleDelete}>
                                         <MaterialIcon name='delete' size={30} style={{
                                             marginLeft: 10,
                                         }} />
@@ -107,7 +134,7 @@ export default function Finished({ navigation }) {
                         files.length > 1
                             ?
                             files?.map(file => (
-                                <FinishedVideo navigation={navigation} deleteMenu={deleteItem} handleCheck={handleCheck} file={file} key={file._id} />
+                                <FinishedVideo navigation={navigation} deleteMenu={deleteItem} handleCheck={handleCheck} file={file} key={file._id} id={file._id} />
                             ))
                             :
                             <View>

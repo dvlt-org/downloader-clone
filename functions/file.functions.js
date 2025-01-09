@@ -1,6 +1,6 @@
 import * as FileSystem from "expo-file-system"
 
-export const getSize = async (uri) => {
+export const GetSize = async (uri) => {
     try {
         const fileInfo = await FileSystem.getInfoAsync(uri)
         if (fileInfo.exists) {
@@ -13,7 +13,7 @@ export const getSize = async (uri) => {
     }
 }
 
-export const deleteFromDirectory = async (uri) => {
+export const DeleteFromDirectory = async (uri) => {
     try {
         await FileSystem.deleteAsync(uri)
         console.log("file deleted")
@@ -22,7 +22,7 @@ export const deleteFromDirectory = async (uri) => {
     }
 }
 
-export const moveToFile = async (fromUri, toUri) => {
+export const MoveToFile = async (fromUri, toUri) => {
     try {
         await FileSystem.moveAsync({
             from: fromUri,

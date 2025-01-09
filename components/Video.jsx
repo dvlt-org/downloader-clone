@@ -9,16 +9,9 @@ const host = `http://192.168.100.14:5000/`
 const Video = ({ type, video }) => {
     const [paused, setPaused] = React.useState(false)
     const progresses = useSelector(store => store.user.downloadingProgress)
-    console.log("downloadingResumble:", Object.getOwnPropertyNames(Object.getPrototypeOf(video.downloadingResumble)));
 
     const progress = progresses[video.video._id]
-
     const progressPercent = (progress?.totalBytesWritten / progress?.totalBytesExpectedToWrite) * 100;
-
-
-    console.log("progress:", progress)
-    console.log("progressPercent:", progressPercent)
-
     const bytesToMB = (bytes) => (bytes / (1024 * 1024)).toFixed(2);
 
     const handleVideo = async () => {

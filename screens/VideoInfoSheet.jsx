@@ -5,7 +5,7 @@ import BrowserIcon from "../assets/icons/browser.png"
 import { Image } from "react-native"
 import * as FileSystem from "expo-file-system"
 
-import { deleteFromDirectory } from "../functions/file.functions"
+import { DeleteFromDirectory } from "../functions/file.functions"
 import axios from "axios"
 import { host } from "../constants/requests"
 
@@ -18,12 +18,11 @@ export default function VidoeInfoSheet(props) {
     const directory = FileSystem.documentDirectory
     const route = props.route
     const navigation = props.navigation
-    console.log(route.params)
 
     const handleDelete = async () => {
         const res = await axios.delete(host + "/api/file/" + route.params.file._id)
         console.log("video-info:", res.data)
-        deleteFromDirectory(directory + route.params.file.name + ".mp4")
+        DeleteFromDirectory(directory + route.params.file.name + ".mp4")
             .then(() => {
                 console.log("Directorydan o'chirib tashlandi...")
             })

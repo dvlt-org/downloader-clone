@@ -1,9 +1,11 @@
 import { Video } from "expo-av"
+import { useState } from "react"
 import { TouchableOpacity, View, Text, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import FontIcon from "react-native-vector-icons/FontAwesome"
 
 const VideoPlayer = (props) => {
+    const [videoError, setVideoError] = useState("")
     const navigation = props.navigation
     const route = props.route
     return (
@@ -33,6 +35,7 @@ const VideoPlayer = (props) => {
                                 borderRadius: 50,
                                 backgroundColor: "black",
                                 padding: 10,
+                                width: 45,
                             }}
                             color={"white"}
                         />
@@ -43,6 +46,20 @@ const VideoPlayer = (props) => {
                         fontWeight: "400"
                     }}>ORTGA QAYTISH</Text>
                 </View>
+                {
+                    videoError && (
+                        <View style={{
+                            marginTop: 300,
+                        }}>
+                            <Text
+                                style={{
+                                    textAlign: 'center',
+                                    fontWeight: "500",
+                                    fontSize: 25,
+                                }}>{videoError}</Text>
+                        </View>
+                    )
+                }
                 {route.params.videoUri
                     ?
                     <Video
@@ -59,6 +76,7 @@ const VideoPlayer = (props) => {
                             borderRadius: 10,
                             padding: 10,
                         }}
+                        shouldPlay
                     />
                     :
                     <ActivityIndicator size="small" />}

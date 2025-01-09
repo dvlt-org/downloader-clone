@@ -1,11 +1,11 @@
 import * as FileSystem from "expo-file-system"
 import * as MediaLibrary from "expo-media-library"
-import { addProgress } from "../state/userSlice"
+import { addProgress, queryChanging } from "../state/userSlice"
 
 export const saveFiles = async (video, dispatch, downloadDispatch, queryChangingValue) => {
+    console.log("queryChangingValue:", queryChangingValue)
     try {
         if (video) {
-            console.log("%cIt's from saveFiles:", queryChangingValue)
             const fileName = video.name + ".mp4"
             const downloadingResumble = FileSystem.createDownloadResumable(
                 video.downloadUrl,
@@ -34,12 +34,14 @@ export const saveFiles = async (video, dispatch, downloadDispatch, queryChanging
                 return 0;
             }
 
+
             const { uri } = await downloadingResumble.downloadAsync()
             console.log("file muvaffaqiyatli yuklab olindi !")
 
             const asset = await MediaLibrary.createAssetAsync(uri)
             await MediaLibrary.createAlbumAsync("Download", asset, false)
             console.log("galareyaga saqlandi !")
+            dispatch(queryChanging(!queryChangingValue))
         } else {
             console.log("video malumotlari mavjud emas !")
         }

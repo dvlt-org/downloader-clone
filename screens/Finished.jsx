@@ -29,7 +29,7 @@ export default function Finished({ navigation }) {
         const getFiles = async () => {
             try {
                 const files = await axios.get(host + "/api/file/" + userId)
-                setFiles(files.data)
+                setFiles(files.data.reverse())
             } catch (error) {
                 console.log("Files error:", error)
             }

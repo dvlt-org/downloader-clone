@@ -64,7 +64,7 @@ export default function Home({ navigation }) {
         getUserId()
     }, [handleSearch, title, querysChanging, triggerCreateQuery])
 
-    console.log(userId)
+    console.log("userId:", userId)
 
 
     const querys = useSelector(state => state.user.querys)

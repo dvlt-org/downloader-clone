@@ -52,7 +52,6 @@ const HomeView = (props) => {
     const viewRef = useRef(null)
     const { state, downloadDispatch } = useContext(downloadContext)
     const queryChangingValue = useSelector(store => store.user.queryChanging)
-    console.log("query Changin on view:", queryChangingValue)
     const dispatch = useDispatch()
     const querys = useSelector(store => store.user.querys)
     const userId = useSelector(store => store.user.userId)
@@ -67,7 +66,7 @@ const HomeView = (props) => {
                 user_id: userId
             })
             if (res.data) setDownloadLoading(false)
-            console.log(res.data, "File yaratildi... !")
+            console.log("File yaratildi... !")
             saveFiles(res.data, dispatch, downloadDispatch, queryChangingValue)
         } catch (error) {
             console.log(error, "file yaratilmadi !")

@@ -4,36 +4,26 @@ const initialState = {
     userId: null,
     querys: [],
     queryChanging: false,
-    downloadVideos: [],
-    downloadProgress: 0,
+    downloadingProgress: {}
 }
 
 export const userSlice = createSlice({
     name: "user",
     initialState,
     reducers: {
-        login: (state, payload) => {
-            state.userId = JSON.parse(payload.payload)
+        login: (state, action) => {
+            state.userId = action.payload
         },
-        addQuerys: (state, payload) => {
-            state.querys = JSON.parse(payload.payload)
+        addQuerys: (state, action) => {
+            state.querys = action.payload
         },
-        queryChanging: (state, payload) => {
-            state.queryChanging = JSON.parse(payload.payload)
+        queryChanging: (state, action) => {
+            state.queryChanging = action.payload
         },
-        changeDownloadVideo: (state, action) => {
-            state.downloadVideos = [...state.downloadVideos, JSON.parse(action.payload)]
-        },
-        changeDownloadProgress: (state, action) => {
-            state.downloadProgress = JSON.parse(action.payload)
+        addProgress: (state, action) => {
+            state.downloadingProgress[action.payload.id] = action.payload.progress
         }
     },
-    middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware({
-            serializableCheck: {
-                ignoredActions: ['user/changeDownloadVideo'],
-            },
-        }),
 })
 
 
@@ -41,8 +31,8 @@ export const {
     login,
     addQuerys,
     queryChanging,
-    changeDownloadVideo,
-    changeDownloadProgress } = userSlice.actions
+    addProgress
+} = userSlice.actions
 
 
 export default userSlice.reducer

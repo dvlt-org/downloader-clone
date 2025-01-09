@@ -1,28 +1,31 @@
 import * as FileSystem from "expo-file-system"
 import * as MediaLibrary from "expo-media-library"
-import { changeDownloadProgress, changeDownloadVideo } from "../state/userSlice"
+import { addProgress } from "../state/userSlice"
 
-export const saveFiles = async (video, setDownloadProgress, setDownloadLoading, setDownloadVideo, dispatch) => {
-    console.log("menimcha dispatchda hech qanday muammo yo'q")
+export const saveFiles = async (video, dispatch, downloadDispatch, queryChangingValue) => {
     try {
         if (video) {
-            console.log("save files funksiyasi boshlandi...")
+            console.log("%cIt's from saveFiles:", queryChangingValue)
             const fileName = video.name + ".mp4"
             const downloadingResumble = FileSystem.createDownloadResumable(
                 video.downloadUrl,
                 FileSystem.documentDirectory + fileName,
                 {},
                 (progress) => {
-                    setDownloadProgress((progress.totalBytesWritten / progress.totalBytesExpectedToWrite) * 100)
-                    dispatch(changeDownloadProgress((progress.totalBytesWritten / progress.totalBytesExpectedToWrite) * 100))
-                    console.log("progress o'zgarmoqda !")
+                    dispatch(addProgress({
+                        id: video._id,
+                        progress: progress
+                    }))
                 }
             )
             // loading !
-            setDownloadLoading(false)
-            setDownloadVideo(downloadingResumble)
-            dispatch(changeDownloadVideo(downloadingResumble))
-
+            downloadDispatch({
+                type: "add",
+                payload: {
+                    downloadingResumble,
+                    video,
+                }
+            })
 
             // permission to media library
             const { status } = await MediaLibrary.requestPermissionsAsync()
@@ -33,7 +36,6 @@ export const saveFiles = async (video, setDownloadProgress, setDownloadLoading, 
 
             const { uri } = await downloadingResumble.downloadAsync()
             console.log("file muvaffaqiyatli yuklab olindi !")
-
 
             const asset = await MediaLibrary.createAssetAsync(uri)
             await MediaLibrary.createAlbumAsync("Download", asset, false)

@@ -3,25 +3,44 @@ import { View, Text, Image, TouchableOpacity } from "react-native"
 import DotsIcon from "../assets/icons/dots.png"
 import MaterialIcons from "react-native-vector-icons/MaterialIcons"
 import CheckBox from "expo-checkbox"
+import * as FileSystem from "expo-file-system"
+import { getSize } from "../functions/file.functions"
 
 
-const Video = ({ navigation, deleteMenu, handleCheck, id }) => {
+const host = `http://192.168.100.14:5000`
+
+
+const Video = ({ navigation, deleteMenu, handleCheck, id, file }) => {
     console.log("Finish", navigation)
-    const [paused, setPaused] = React.useState(false)
     const [check, setCheck] = React.useState(false)
     const [dotsMenu, setDotsMenu] = React.useState(false)
+    const [fileSize, setFileSize] = React.useState(0)
+
+    const directory = FileSystem.documentDirectory
+
+    const videoDirectory = directory + file.name + ".mp4"
+    console.log("videoDirectory:", videoDirectory)
+
+
+    const size = getSize(videoDirectory)
+    size.then((sizeOfFile) => setFileSize((sizeOfFile.size / (1024 * 1024))))
 
     return (
         <View style={{
             flexDirection: "row",
             marginVertical: 10,
         }}>
-            <Image source={{
-                uri: "https://avatars.dzeninfra.ru/get-zen_doc/271828/pub_67661aa03f13fa34f1aec4bf_67661aa03f13fa34f1aec4c0/smart_crop_516x290"
-            }} width={100} height={100} style={{
-                objectFit: "cover",
-                borderRadius: 10,
-            }} />
+            <TouchableOpacity
+                onPress={() => navigation.navigate("VideoPlayer", {
+                    videoUri: videoDirectory
+                })}>
+                <Image source={{
+                    uri: host + `/${file.image}`
+                }} width={100} height={100} style={{
+                    objectFit: "cover",
+                    borderRadius: 10,
+                }} />
+            </TouchableOpacity>
             <View>
                 <View
                     style={{
@@ -39,7 +58,7 @@ const Video = ({ navigation, deleteMenu, handleCheck, id }) => {
                             }}
                             numberOfLines={1}
                             ellipsizeMode="tail"
-                        >name of vidoe.mp4</Text>
+                        >{file.name}.mp4</Text>
                         {!deleteMenu ? (
                             <TouchableOpacity onPress={() => {
                                 setDotsMenu(true)
@@ -65,11 +84,12 @@ const Video = ({ navigation, deleteMenu, handleCheck, id }) => {
                         alignItems: "center",
                         marginTop: 10
                     }}>
-                        <MaterialIcons name="movie" size={20} color={"lightgray"} />
+                        <MaterialIcons name="movie" size={20} color={"gray"} />
                         <Text style={{
                             marginLeft: 10,
-                            color: 'lightgray'
-                        }}>40/mb</Text>
+                            color: 'gray',
+                            fontWeight: "bold"
+                        }}>{fileSize.toFixed(2)} M/B</Text>
                     </View>
                 </View>
             </View>

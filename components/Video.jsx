@@ -1,20 +1,51 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { View, Text, Image, TouchableOpacity } from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome"
+import { useSelector } from "react-redux"
+
+const host = `http://192.168.100.14:5000/`
 
 
 const Video = ({ type, video }) => {
-    const [paused, setPaused] = React.useState(true)
+    const [paused, setPaused] = React.useState(false)
+    const progresses = useSelector(store => store.user.downloadingProgress)
+    console.log("downloadingResumble:", Object.getOwnPropertyNames(Object.getPrototypeOf(video.downloadingResumble)));
 
-    console.log(video)
+    const progress = progresses[video.video._id]
+
+    const progressPercent = (progress?.totalBytesWritten / progress?.totalBytesExpectedToWrite) * 100;
+
+
+    console.log("progress:", progress)
+    console.log("progressPercent:", progressPercent)
+
+    const bytesToMB = (bytes) => (bytes / (1024 * 1024)).toFixed(2);
+
+    const handleVideo = async () => {
+        try {
+            if (paused) {
+                console.log("paused")
+                await video.downloadingResumble.resumeAsync()
+                setPaused(false)
+            } else {
+                console.log("not paused")
+                await video.downloadingResumble.pauseAsync()
+                setPaused(true)
+            }
+        } catch (error) {
+            console.log("pause error:", error)
+        }
+    }
 
     return (
+        progressPercent !== 100
+        &&
         <View style={{
             flexDirection: "row",
             marginVertical: 10,
         }}>
             <Image source={{
-                uri: "https://avatars.dzeninfra.ru/get-zen_doc/271828/pub_67661aa03f13fa34f1aec4bf_67661aa03f13fa34f1aec4c0/smart_crop_516x290"
+                uri: host + video.video.image
             }} width={100} height={100} style={{
                 objectFit: "cover",
                 borderRadius: 10,
@@ -27,7 +58,7 @@ const Video = ({ type, video }) => {
                     marginVertical: 5,
                     fontSize: 16,
                     fontWeight: "bold",
-                }}>Video nomi.mp4</Text>
+                }}>{`${video.video.name}.mp4`}</Text>
                 {
                     type !== "downloaded" && (
                         <View style={{
@@ -41,7 +72,7 @@ const Video = ({ type, video }) => {
                             <View style={{
                                 position: "absolute",
                                 left: 0,
-                                width: "10%",
+                                width: `${progressPercent}%`,
                                 backgroundColor: "#0496ff",
                                 height: "100%",
                                 borderRadius: 5,
@@ -59,7 +90,7 @@ const Video = ({ type, video }) => {
                             fontSize: 12,
                             color: "#000",
                             fontWeight: "bold",
-                        }}>42.12mb</Text>
+                        }}>{bytesToMB(progress?.totalBytesExpectedToWrite)}</Text>
                         <Text style={{
                             fontSize: 15,
                             marginHorizontal: 5,
@@ -69,7 +100,7 @@ const Video = ({ type, video }) => {
                             fontSize: 12,
                             color: "#000",
                             fontWeight: "bold",
-                        }}>21.02mb</Text>
+                        }}>{bytesToMB(progress?.totalBytesWritten)}MB</Text>
                     </View>
                 </View>
                 <View
@@ -79,22 +110,15 @@ const Video = ({ type, video }) => {
                         alignItems: "center",
                         marginTop: 5,
                     }}>
-                    <Text
-
-                        style={{
-                            color: "#4361ee",
-                            fontWeight: "bold"
-                        }}>42 MB/s
-                    </Text>
                     <TouchableOpacity
+                        onPress={handleVideo}
                         style={{
-                            marginLeft: 20,
+                            width: 50,
+                            height: 50,
                         }}
-                        onPress={() => setPaused(!paused)}
                     >
                         <Icon name={paused ? "play" : "pause"} size={20} />
                     </TouchableOpacity>
-
                 </View>
             </View>
         </View>

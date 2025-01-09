@@ -2,11 +2,12 @@ import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Video from "../components/Video"
 import MaterialIcon from "react-native-vector-icons/MaterialIcons"
-import { useSelector, useDispatch } from "react-redux"
+import { useContext } from "react"
+import { downloadContext } from "../context/downloadContext"
 
 export default function Progress({ navigation }) {
-    const downloadVideos = useSelector(store => store.user.downloadVideos)
-    console.log(downloadVideos, "from progress")
+    const { state, downloadDispatch } = useContext(downloadContext)
+    const downloadVideos = state.videos
 
     return (
         <SafeAreaView>
@@ -39,11 +40,7 @@ export default function Progress({ navigation }) {
                 marginHorizontal: 10,
             }}>
                 {
-                    downloadVideos.map((item, index) => {
-                        return (
-                            <Video video={item} key={index}/>
-                        )
-                    })
+                    downloadVideos.map((item, index) => (<Video video={item} key={index} />))
                 }
             </ScrollView>
         </SafeAreaView>

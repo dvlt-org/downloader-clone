@@ -13,13 +13,14 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons"
 import { saveFiles } from "../functions/view.functions"
 import ReloadIcon from "../assets/icons/reload.png"
 import DotsIcon from "../assets/icons/dots.png"
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useRef, useState } from 'react'
 import HomeMenu from "../components/HomeMenu"
 import { useSelector, useDispatch } from "react-redux"
 import axios from "axios"
 
 
 import { SafeAreaView } from "react-native-safe-area-context"
+import { downloadContext } from "../context/downloadContext"
 
 
 const host = `http://192.168.100.14:5000`
@@ -36,13 +37,10 @@ const injectJs = `
         true;
 `
 
-
 const { width } = Dimensions.get("window")
 
 const HomeView = (props) => {
     const [downloadLoading, setDownloadLoading] = useState(false)
-    const [downloadProgress, setDownloadProgress] = useState(0)
-    const [downloadVideo, setDownloadVideo] = useState(null)
     const [downloadUrl, setDownloadUrl] = useState("")
     const [video, setVideo] = useState(false)
     const [menu, setMenu] = useState(false)
@@ -52,27 +50,28 @@ const HomeView = (props) => {
     const route = props.route
 
     const viewRef = useRef(null)
+    const { state, downloadDispatch } = useContext(downloadContext)
+    const queryChangingValue = useSelector(store => store.user.queryChanging)
+    console.log("query Changin on view:", queryChangingValue)
     const dispatch = useDispatch()
     const querys = useSelector(store => store.user.querys)
     const userId = useSelector(store => store.user.userId)
 
+
     const handleDownloader = async () => {
         setDownloadLoading(true)
-        if (video) {
-            try {
-                const res = await axios.post(`${host}/api/file`, {
-                    name: Date.now(),
-                    url: downloadUrl,
-                    user_id: userId
-                })
-                if (res.data) setDownloadLoading(false)
-                console.log(res.data, "File yaratildi... !")
-                saveFiles(res.data, setDownloadProgress, setDownloadLoading, setDownloadVideo, dispatch)
-            } catch (error) {
-                console.log(error, "file yaratilmadi !")
-            }
-        } else {
-            console.log("Bu sahifada video mavjud emas !")
+        try {
+            const res = await axios.post(`${host}/api/file`, {
+                name: Date.now(),
+                url: downloadUrl,
+                user_id: userId
+            })
+            if (res.data) setDownloadLoading(false)
+            console.log(res.data, "File yaratildi... !")
+            saveFiles(res.data, dispatch, downloadDispatch, queryChangingValue)
+        } catch (error) {
+            console.log(error, "file yaratilmadi !")
+            setDownloadLoading(false)
         }
     }
 
@@ -212,37 +211,33 @@ const HomeView = (props) => {
                             startInLoadingState={true}
                             onNavigationStateChange={(e) => setDownloadUrl(e.url)}
                         />
-                        {
-                            video
-                            &&
-                            <TouchableOpacity
-                                onPress={handleDownloader}
-                                activeOpacity={1}
-                                disabled={!downloadLoading}>
-                                <View
-                                    style={{
-                                        width: 50,
-                                        height: 50,
-                                        justifyContent: "center",
-                                        position: "absolute",
-                                        right: 70,
-                                        bottom: 200,
-                                        backgroundColor: "purple",
-                                        borderRadius: "50%",
-                                    }}
-                                >
-                                    {
-                                        downloadLoading
-                                            ? <ActivityIndicator size={"small"} color={"white"} />
-                                            : <MaterialIcons name="download" size={18} color={"white"}
+                        <TouchableOpacity
+                            onPress={handleDownloader}
+                            activeOpacity={1}
+                            disabled={downloadLoading}>
+                            <View
+                                style={{
+                                    width: 50,
+                                    height: 50,
+                                    justifyContent: "center",
+                                    position: "absolute",
+                                    right: 70,
+                                    bottom: 200,
+                                    backgroundColor: "purple",
+                                    borderRadius: "50%",
+                                }}
+                            >
+                                {
+                                    downloadLoading
+                                        ? <ActivityIndicator size={"small"} color={"white"} />
+                                        : <MaterialIcons name="download" size={18} color={"white"}
 
-                                                style={{
-                                                    textAlign: "center",
-                                                }} />
-                                    }
-                                </View>
-                            </TouchableOpacity>
-                        }
+                                            style={{
+                                                textAlign: "center",
+                                            }} />
+                                }
+                            </View>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </TouchableWithoutFeedback>

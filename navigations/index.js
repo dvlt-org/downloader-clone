@@ -50,7 +50,8 @@ export default function HomeDrawer() {
                 headerShown: false,
                 drawerStyle: {
                     paddingVertical: 20
-                }
+                },
+                
             }
         }}
             drawerContent={DrawerContent}>

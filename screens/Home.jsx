@@ -29,6 +29,7 @@ import { addQuerys, login, queryChanging } from "../state/userSlice.js"
 import { createQuery } from "../functions/home.functions.js"
 import axios from "axios"
 
+
 // file system
 
 const host = `http://192.168.100.14:5000`
@@ -46,8 +47,6 @@ export default function Home({ navigation }) {
     // state values
     const dispatch = useDispatch()
     const querysChanging = useSelector(store => store.user.queryChanging)
-
-
     useEffect(() => {
         const getUserId = async () => {
             const newId = await AsyncStorage.getItem("user_id")
@@ -65,6 +64,9 @@ export default function Home({ navigation }) {
         getUserId()
     }, [handleSearch, title, querysChanging, triggerCreateQuery])
 
+    console.log(userId)
+
+
     const querys = useSelector(state => state.user.querys)
 
     // update title
@@ -73,7 +75,6 @@ export default function Home({ navigation }) {
             createQuery(userId, title)
         }
     }, [triggerCreateQuery, title])
-
 
 
     const handleSearch = async () => {
@@ -99,11 +100,13 @@ export default function Home({ navigation }) {
         }
     }
 
-
     return (
         <SafeAreaProvider>
             <SafeAreaView>
-                <TouchableWithoutFeedback onPress={() => setMenu(false)}>
+                <TouchableWithoutFeedback onPress={() => {
+                    setMenu(false)
+                    setInputError(false)
+                }}>
                     <View style={{
                         marginHorizontal: 20,
                     }}>
@@ -195,6 +198,7 @@ export default function Home({ navigation }) {
                             <View>
                                 <Text style={{
                                     color: "red",
+                                    marginTop: 5,
                                 }}>
                                     {inputError && inputError}
                                 </Text>

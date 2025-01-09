@@ -62,7 +62,9 @@ const Video = ({ navigation, deleteMenu, handleCheck, id, file }) => {
                         {!deleteMenu ? (
                             <TouchableOpacity onPress={() => {
                                 setDotsMenu(true)
-                                navigation.navigate("VideoInfo")
+                                navigation.navigate("VideoInfo", {
+                                    file
+                                })
                             }}>
                                 <Image source={DotsIcon} style={{
                                     width: 20,

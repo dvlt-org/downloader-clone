@@ -11,9 +11,8 @@ import axios from 'axios'
 
 import { useSelector } from 'react-redux'
 
-
 // constants
-const host = `http://192.168.100.14:5000`
+import { host } from '../constants/requests.js'
 
 export default function Finished({ navigation }) {
     const [deleteItem, setDeleteItem] = useState(false)

@@ -32,7 +32,7 @@ import axios from "axios"
 
 // file system
 
-const host = `http://192.168.100.14:5000`
+import { host } from "../constants/requests.js"
 
 export default function Home({ navigation }) {
     const [inputError, setInputError] = useState("")

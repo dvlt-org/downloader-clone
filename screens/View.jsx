@@ -23,8 +23,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { downloadContext } from "../context/downloadContext"
 
 
-const host = `http://192.168.100.14:5000`
-
+import { host } from "../constants/requests"
 const injectJs = `
        setInterval(() => {
          const video = document.querySelector("video")

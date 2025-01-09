@@ -2,17 +2,46 @@ import { View, Text, TouchableOpacity } from "react-native"
 import MaterialIcons from "react-native-vector-icons/MaterialIcons"
 import RenameIcon from "../assets/icons/rename.png"
 import BrowserIcon from "../assets/icons/browser.png"
-import FontIcons from "react-native-vector-icons/FontAwesome"
 import { Image } from "react-native"
+import * as FileSystem from "expo-file-system"
 
-export default function VidoeInfoSheet() {
+import { deleteFromDirectory } from "../functions/file.functions"
+import axios from "axios"
+import { host } from "../constants/requests"
+
+import { useSelector, useDispatch } from "react-redux"
+import { queryChanging } from "../state/userSlice"
+
+export default function VidoeInfoSheet(props) {
+    const dispatch = useDispatch()
+    const queryChangingValue = useSelector(store => store.user.queryChanging)
+    const directory = FileSystem.documentDirectory
+    const route = props.route
+    const navigation = props.navigation
+    console.log(route.params)
+
+    const handleDelete = async () => {
+        const res = await axios.delete(host + "/api/file/" + route.params.file._id)
+        console.log("video-info:", res.data)
+        deleteFromDirectory(directory + route.params.file.name + ".mp4")
+            .then(() => {
+                console.log("Directorydan o'chirib tashlandi...")
+            })
+            .catch((err) => {
+                console.log("directorydan o'chirib tashlanmadi:", err)
+            })
+        dispatch(queryChanging(!queryChangingValue))
+        console.log("query changed:", queryChangingValue)
+        navigation.goBack()
+    }
+
     return (
         <View style={{
             padding: 30,
         }}>
             <Text style={{
                 fontSize: 30,
-            }}>Videonomi.mp4</Text>
+            }}>{route.params.file.name}.mp4</Text>
             <View style={{
                 height: 1,
                 width: "100%",
@@ -84,20 +113,9 @@ export default function VidoeInfoSheet() {
                     flexDirection: 'row',
                     marginBottom: 20,
                     alignItems: "center"
-                }}>
-                    <FontIcons name="location-arrow" size={30} />
-                    <Text style={{
-                        fontSize: 16,
-                        marginLeft: 10,
-                        fontWeight: "500",
-
-                    }}>Browserdan ochish</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={{
-                    flexDirection: 'row',
-                    marginBottom: 20,
-                    alignItems: "center"
-                }}>
+                }}
+                    onPress={handleDelete}
+                >
                     <MaterialIcons name="delete" size={30} />
                     <Text style={{
                         fontSize: 16,

@@ -1,42 +1,110 @@
-import { View, Text, ScrollView, TouchableWithoutFeedback, Image, TouchableOpacity } from "react-native"
-import MaterialIcon from "react-native-vector-icons/MaterialIcons"
+import {
+    View,
+    Text,
+    TouchableWithoutFeedback,
+    Image,
+    TouchableOpacity,
+    FlatList,
+    ActivityIndicator
+} from "react-native"
+import React, { useContext, useEffect, useState } from "react"
 import FontIcon from "react-native-vector-icons/FontAwesome"
-import React, { useEffect, useState } from "react"
-import Browser from "../assets/icons/browser.png"
+import { downloadContext } from "../context/downloadContext"
 import DotsIcon from "../assets/icons/dots.png"
 import * as Font from "expo-font"
 
-// data
-import { dataOfSites } from "../constants/downloadingSites"
-
-
-// state
-import { useDispatch, useSelector } from "react-redux"
-import { queryChanging } from "../state/userSlice"
-import { ActivityIndicator } from "react-native"
-
 
 // querys
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { createQuery } from "../functions/home.functions"
+import { host } from "../constants/requests"
+import DrawerElement from "./DrawerElement"
 import axios from "axios"
-const host = `http://192.168.100.14:5000`
 
 
 export default function DrawerContent(navigation) {
+    const [currentQueryIndex, setCurrentQueryIndex] = useState(0)
+    const [indexChanging, setIndexChanging] = useState(true)
+    const [menuLoading, setMenuLoading] = useState(false)
+    const [activeIndex, setActiveIndex] = useState(0)
+    const [siteName, setSiteName] = useState("")
+    const [userId, setUserId] = useState("")
+    const [querys, setQuerys] = useState([])
     const [menu, setMenu] = useState(false)
-    const [menuLoading, setMenuLoading] = useState(0)
 
-    const dispatch = useDispatch()
+    const { state, dispatch } = useContext(downloadContext)
+    const { activeQuery, querysChanging } = state
 
 
-    const querys = useSelector(store => store.user.querys)
-    const changinItem = useSelector(store => store.user.queryChanging)
+    // load fonts
+    useEffect(() => {
+        const loadFont = async () => {
+            await Font.loadAsync({
+                "inter-bold": require("../font/inter/Inter_18pt-Bold.ttf"),
+                "inter-medium": require("../font/inter/Inter_18pt-Medium.ttf")
+            });
+        };
+        loadFont();
+    }, [])
+
+
+    useEffect(() => {
+        const getUserId = async () => {
+            const newId = await AsyncStorage.getItem("user_id")
+            console.log("newId: ", newId)
+            if (newId) {
+                setUserId(newId)
+                const res = await axios.get(`${host}/api/query/${newId}`)
+                setQuerys(res.data)
+
+                dispatch({
+                    type: "querysChanging",
+                    payload: !state.querysChanging
+                })
+            }
+            else {
+                const newGeneratedId = generateId()
+
+                await AsyncStorage.setItem("user_id", newGeneratedId).then(() => {
+                    console.log("user id changed", newGeneratedId)
+                })
+            }
+        }
+        getUserId()
+    }, [querysChanging])
+
+
+    useEffect(() => {
+        if (querys.length === 0) {
+            createQuery(userId, "Home-Page")
+            dispatch({
+                type: "querysChanging",
+                payload: !querysChanging
+            })
+        }
+        if (Array.isArray(activeQuery.history) && ((activeQuery.history.length > 0) & indexChanging)) {
+            setCurrentQueryIndex(activeQuery.history.length - 1)
+            getName()
+        }
+        if (activeIndex) {
+            dispatch({
+                type: "activeQueryUpdate",
+                payload: querys[activeIndex]
+            })
+        }
+    }, [querys, activeIndex])
+
 
     const handleQueryDelete = async (queryId) => {
         try {
             const res = await axios.delete(`${host}/api/query/${queryId}`)
             console.log(res.data)
+            setActiveIndex(0)
 
-            dispatch(queryChanging(!changinItem))
+            dispatch({
+                type: "querysChanging",
+                payload: !querysChanging
+            })
         } catch (error) {
             console.log(error)
         }
@@ -50,43 +118,62 @@ export default function DrawerContent(navigation) {
                 if (res) setMenuLoading(false)
                 console.log(res.data)
             }
-            dispatch(queryChanging(!changinItem))
+
+            dispatch({
+                type: "querysChanging",
+                payload: !querysChanging
+            })
             setMenu(false)
         } catch (error) {
             console.log(error)
         }
     }
-
-    const closeDrawer = async () => {
-        navigation.navigation.closeDrawer()
+    const handlePrevious = () => {
+        setIndexChanging(false)
+        setCurrentQueryIndex(prev => {
+            if (prev > 0) {
+                return prev = prev - 1
+            } else {
+                return prev = 0
+            }
+        })
     }
 
-    React.useEffect(() => {
-        const loadFont = async () => {
-            await Font.loadAsync({
-                "inter-bold": require("../font/inter/Inter_18pt-Bold.ttf"),
-                "inter-medium": require("../font/inter/Inter_18pt-Medium.ttf")
-            })
+    const handleNext = () => {
+        if (Array.isArray(activeQuery.history) && (currentQueryIndex !== activeQuery.history.length)) {
+            setIndexChanging(false)
+            setCurrentQueryIndex(prev => prev = prev + 1)
         }
-        loadFont()
-    }, [])
+    }
 
-    const hasIcon = (url) => {
-        for (const item of dataOfSites) {
-            if (url.toLowerCase().includes(item.title.toLowerCase())) {
-                return item.iconName ? <FontIcon name={item.iconName} size={25} color={item.iconColor} /> : <Image source={item.iconImage} style={{
-                    width: 25,
-                    height: 25,
-                    objectFit: "contain"
-                }} />
+    const handleNew = () => {
+        try {
+            createQuery(userId, "Home-Page")
+
+            dispatch({
+                type: "querysChanging",
+                payload: !querysChanging
+            })
+
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const getName = () => {
+        if (currentQueryIndex >= 0) {
+            if (Array.isArray(activeQuery.history) && (currentQueryIndex > activeQuery.history.length - 1)) {
+                // return activeQuery?.name.toString()
+                setSiteName(activeQuery?.name.toString())
+            } else if (Array.isArray(activeQuery.history) && (currentQueryIndex < activeQuery.history.length)) {
+                // return Array.isArray(activeQuery.history) && activeQuery?.history[currentQueryIndex].query.name.toString()
+                setSiteName(Array.isArray(activeQuery.history) && activeQuery?.history[currentQueryIndex].query.name.toString())
+            } else if (Array.isArray(activeQuery.history) && !activeQuery.history[0]) {
+                // return activeQuery?.name.toString()
+                setSiteName(activeQuery?.name.toString())
             }
         }
-        return (<Image source={Browser} style={{
-            width: 25,
-            height: 25,
-            objectFit: "contain"
-        }} />);
-    };
+    }
 
     return (
         <View
@@ -119,18 +206,18 @@ export default function DrawerContent(navigation) {
                             <TouchableOpacity
                                 onPress={handleDeleteAll}
                             >
-                                <Text style={{
+                                {!menuLoading ? <Text style={{
                                     fontSize: 14,
                                     marginVertical: 10,
                                     flexDirection: "row",
                                 }}>
                                     Hamma sahifalarni yopish
-                                    {
-                                        menuLoading && <ActivityIndicator style={{
-                                            marginLeft: 10,
-                                        }} size={"small"} color={"black"} />
-                                    }
-                                </Text>
+                                </Text> : (
+                                    <ActivityIndicator style={{
+                                        marginLeft: 10,
+                                    }} size={"small"} color={"black"} />
+                                )
+                                }
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -166,57 +253,20 @@ export default function DrawerContent(navigation) {
                     </TouchableWithoutFeedback>
                 </View>
             </View>
-            <ScrollView>
-                <View
-                    style={{
-                        padding: 20,
-                    }}>
-                    {
-                        querys.length > 0 && (
-                            querys.map((item, index) => {
-                                return (
-                                    <TouchableOpacity
-                                        key={index}
-                                        style={{
-                                            flexDirection: "row",
-                                            justifyContent: "space-between",
-                                            alignItems: "center",
-                                            width: "100%",
-                                            marginVertical: 10,
-                                        }}>
-                                        <View>
-                                            {
-                                                hasIcon(item.name)
-                                            }
-                                        </View>
-                                        <View
-                                            style={{
-                                                flexDirection: "row",
-                                                alignItems: "center",
-                                            }}>
-                                            <Text style={{
-                                                marginLeft: 20,
-                                                fontSize: 17,
-                                                fontWeight: "500",
-                                                width: "75%",
-                                                fontFamily: "inter-bold"
-                                            }}
-                                                ellipsizeMode="tail"
-                                                numberOfLines={1}
-                                            >{item.name}</Text>
-                                        </View>
-                                        <TouchableOpacity onPress={() => {
-                                            handleQueryDelete(item._id)
-                                        }}>
-                                            <MaterialIcon name="close" size={25} />
-                                        </TouchableOpacity>
-                                    </TouchableOpacity>
-                                )
-                            })
-                        )
-                    }
-                </View>
-            </ScrollView>
+            <FlatList
+                data={querys}
+                keyExtractor={(item) => item._id}
+                renderItem={({ item, index }) => (
+                    <DrawerElement
+                        query={item}
+                        handleQueryDelete={handleQueryDelete}
+                        activeIndex={activeIndex}
+                        index={index}
+                        setActiveIndex={setActiveIndex}
+                        siteName={siteName}
+                    />
+                )}
+            />
             <View>
                 <View
                     style={{
@@ -229,10 +279,16 @@ export default function DrawerContent(navigation) {
                             justifyContent: "space-between",
                             width: "100%",
                         }}>
-                        <FontIcon name="arrow-left" size={20} color={"#000"} />
-                        <FontIcon name="home" size={20} color={"#000"} onPress={closeDrawer} />
-                        <FontIcon name="arrow-right" size={20} color={"#000"} />
-                        <FontIcon name="plus" size={20} color={"#000"} />
+                        <FontIcon name="arrow-left" size={25} color={"#000"}
+                            onPress={handlePrevious}
+                        />
+                        <FontIcon name="home" size={25} color={"#000"} onPress={() => {
+                            navigation.navigation.closeDrawer()
+                        }} />
+                        <FontIcon name="arrow-right" size={25} color={"#000"}
+                            onPress={handleNext}
+                        />
+                        <FontIcon name="plus" onPress={handleNew} size={25} color={"#000"} />
                     </View>
                 </View>
             </View>

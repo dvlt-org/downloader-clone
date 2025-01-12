@@ -5,107 +5,172 @@ import DotsIcon from "../assets/icons/dots.png"
 
 // import from react native
 import {
-    View, Text, TextInput,
-    ScrollView, Dimensions,
-    Image, TouchableWithoutFeedback,
+    View,
+    Text,
+    TextInput,
+    ScrollView,
+    Image,
+    TouchableWithoutFeedback,
     TouchableOpacity,
 } from "react-native"
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context"
-import { useEffect, useRef, useState } from "react"
-const { width } = Dimensions.get("window")
+import { useEffect, useRef, useState, useContext } from "react"
 
 // components
 import HomeMenu from "../components/HomeMenu.jsx"
 import { dataOfSites } from "../constants/downloadingSites.js"
 
-
 // aysnc storage
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { useDispatch, useSelector } from "react-redux"
 
 // funksiyalar
 import generateId from "../functions/generateId.js"
-import { addQuerys, login, queryChanging } from "../state/userSlice.js"
-import { createQuery } from "../functions/home.functions.js"
+import { createQuery, updateQuery } from "../functions/home.functions.js"
 import axios from "axios"
 
-
 // file system
-
 import { host } from "../constants/requests.js"
+import { hasIcon } from "../functions/drawer.functions.js"
+
+// animation
+import Animated, { useAnimatedStyle, useSharedValue, withTiming, } from "react-native-reanimated"
+
+// components
+import SearchItem from "../components/SearchItems.jsx"
+
+// context api
+import { downloadContext } from "../context/downloadContext.js"
 
 export default function Home({ navigation }) {
-    const [inputError, setInputError] = useState("")
-    const [userId, setUserId] = useState('')
+    const [searchMenu, setSearchMenu] = useState(false)
+    const [querys, setQuerys] = useState([])
+    const [userId, setUserId] = useState("")
     const [menu, setMenu] = useState(false)
     const [title, setTitle] = useState("")
-    // useRef
-    const triggerCreateQuery = useRef(false)
-    const textInputRef = useRef(null)
 
+    // context api
+    const { state, dispatch } = useContext(downloadContext)
+
+    // animation
+    const transform = useSharedValue(-150)
+    const opacity = useSharedValue(0)
+    const transformToTop = useSharedValue(0)
+    const opacityOfBackground = useSharedValue(1)
+
+    // animation
+
+    const inputReanimatedStyle = useAnimatedStyle(() => {
+        return {
+            transform: [{ translateY: transformToTop.value }],
+        }
+    }, [])
+
+    const opacityReanimatedStyle = useAnimatedStyle(() => {
+        return {
+            opacity: opacityOfBackground.value
+        }
+    }, [])
+
+    const menuReanimatedStyle = useAnimatedStyle(() => {
+        return {
+            opacity: opacity.value,
+            transform: [{
+                translateY: transform.value,
+            }]
+        }
+    }, [])
+
+    // animation functions
+
+    const handleInputAnimation = () => {
+        opacityOfBackground.value = withTiming(0.3, { duration: 200 })
+        transformToTop.value = withTiming(-70, { duration: 500 })
+        setSearchMenu(true)
+    }
 
     // state values
-    const dispatch = useDispatch()
-    const querysChanging = useSelector(store => store.user.queryChanging)
+    const querysChanging = state.querysChanging
+    const activeQuery = state.activeQuery
+
+
     useEffect(() => {
         const getUserId = async () => {
             const newId = await AsyncStorage.getItem("user_id")
             if (newId) {
                 setUserId(newId)
                 const res = await axios.get(`${host}/api/query/${newId}`)
-                dispatch(login(newId))
-                dispatch(addQuerys(res.data))
+                setQuerys(res.data)
+
+                dispatch({
+                    type: "querysChanging",
+                    payload: !state.querysChanging
+                })
             }
             else {
                 const newGeneratedId = generateId()
-                dispatch(login(newGeneratedId))
+
+                await AsyncStorage.setItem("user_id", newGeneratedId).then(() => {
+                    console.log("user id changed", newGeneratedId)
+                })
             }
         }
         getUserId()
-    }, [handleSearch, title, querysChanging, triggerCreateQuery])
+    }, [querysChanging])
 
-    console.log("userId:", userId)
-
-
-    const querys = useSelector(state => state.user.querys)
-
-    // update title
     useEffect(() => {
-        if (title && triggerCreateQuery.current) {
-            createQuery(userId, title)
+        if (!menu) {
+            opacity.value = 0;
+            transform.value = -150
         }
-    }, [triggerCreateQuery, title])
+    }, [menu])
 
 
     const handleSearch = async () => {
-        const googleUrl = `https://www.google.com/search?q=${title}&oq=${title}&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIGCAEQRRg8MgYIAhBFGDwyDggDEEUYJxg7GIAEGIoFMhAIBBBFGBMYJxg7GIAEGIoFMgYIBRBFGDwyBggGEEUYPDIGCAcQRRg80gEINDg0MmowajeoAgCwAgA&sourceid=chrome&ie=UTF-8`
-        if (!title) {
-            setInputError("Iltimos video urlini kiriting yoki pastdagi hohlagan siteni bosing !")
-        }
-        else if (title.length <= 10) {
+        const googleUrl = `https://www.google.com/search?q=${title}`
+        if (title.length <= 10) {
             setTitle(googleUrl)
-            createQuery(userId, title)
-            dispatch(queryChanging(!queryChanging))
-            triggerCreateQuery.current = true
+            if (activeQuery._id) {
+                console.log("queryni o'zgartilmoqda...")
+                updateQuery(activeQuery, title)
+            } else {
+                createQuery(userId, title)
+            }
             navigation.navigate("View", {
-                url: title,
+                url: googleUrl,
+            })
+
+            dispatch({
+                type: "querysChanging",
+                payload: !querysChanging
             })
         } else {
-            createQuery(userId, title)
-            dispatch(queryChanging(!queryChanging))
-            triggerCreateQuery.current = true
+            if (activeQuery._id) {
+                console.log("queryni o'zgartilmoqda...")
+                updateQuery(activeQuery, title)
+            } else {
+                createQuery(userId, title)
+            }
             navigation.navigate("View", {
                 url: title
             })
+            dispatch({
+                type: "querysChanging",
+                payload: !querysChanging
+            })
         }
     }
+
+
 
     return (
         <SafeAreaProvider>
             <SafeAreaView>
                 <TouchableWithoutFeedback onPress={() => {
                     setMenu(false)
-                    setInputError(false)
+                    transformToTop.value = withTiming(0, { duration: 200 })
+                    opacityOfBackground.value = withTiming(1, { duration: 200 })
+                    setSearchMenu(false)
+                    setTitle("")
                 }}>
                     <View style={{
                         marginHorizontal: 20,
@@ -163,22 +228,39 @@ export default function Home({ navigation }) {
                                 </TouchableOpacity>
                                 {
                                     menu && (
-                                        <View style={{
-                                            position: "absolute",
-                                            top: 10,
-                                            right: 20,
-                                            width: "200%",
-                                            padding: 10,
-                                            backgroundColor: "#e5e5e5",
-                                            zIndex: 11,
-                                            borderRadius: 10,
-                                        }}>
-                                            <HomeMenu />
-                                        </View>
+                                        <Animated.View style={[
+                                            {
+                                                position: "absolute",
+                                                top: 50,
+                                                right: 0,
+                                                width: "200%",
+                                                padding: 10,
+                                                backgroundColor: "#efefef",
+                                                zIndex: 11,
+                                                borderRadius: 10,
+                                                shadowColor: "#000",
+                                                shadowOffset: {
+                                                    width: 0,
+                                                    height: 4,
+                                                },
+                                                shadowOpacity: 0.32,
+                                                shadowRadius: 5.46,
+
+                                                elevation: 9,
+                                            }, menuReanimatedStyle]}>
+                                            <HomeMenu
+                                                userId={userId}
+                                                title={title}
+                                                navigation={navigation}
+                                                isView
+                                            />
+                                        </Animated.View>
                                     )
                                 }
                                 <TouchableOpacity onPress={() => {
                                     setMenu(!menu)
+                                    transform.value = withTiming(0, { duration: 300, })
+                                    opacity.value = withTiming(1, { duration: 400, })
                                 }}>
                                     <Image source={DotsIcon} style={{
                                         width: 25,
@@ -195,42 +277,38 @@ export default function Home({ navigation }) {
                                 justifyContent: "center",
                                 alignItems: "center",
                             }}>
-                            <View>
-                                <Text style={{
-                                    color: "red",
-                                    marginTop: 5,
-                                }}>
-                                    {inputError && inputError}
-                                </Text>
-                            </View>
-                            <View
-                                style={{
-                                    flexDirection: "row",
-                                    width: "100%",
-                                    alignItems: "center",
-                                    justifyContent: "space-between",
-                                    marginVertical: 10,
-                                    borderWidth: 1,
-                                    borderColor: "#e9ecef",
-                                    borderRadius: 15,
-                                    padding: 5,
-                                    marginTop: 30,
-                                    backgroundColor: "#e9ecef",
-                                }}>
+                            <Animated.View
+                                style={[
+                                    {
+                                        flexDirection: "row",
+                                        width: "100%",
+                                        alignItems: "center",
+                                        justifyContent: "space-between",
+                                        marginVertical: 10,
+                                        borderWidth: 1,
+                                        borderColor: "#e9ecef",
+                                        borderRadius: 15,
+                                        padding: 5,
+                                        marginTop: 30,
+                                        backgroundColor: "#e9ecef",
+                                    },
+                                    inputReanimatedStyle
+                                ]}>
                                 <TextInput
-                                    ref={textInputRef}
                                     placeholder="Linkni kiriting !"
                                     numberOfLines={1}
                                     onChangeText={(text) => {
                                         setTitle(text)
-                                        triggerCreateQuery.current = false
                                     }}
                                     onSubmitEditing={handleSearch}
                                     style={{
                                         fontWeight: "bold",
                                         width: "90%",
                                         height: 50,
-                                    }} />
+                                    }}
+                                    onPress={handleInputAnimation}
+                                />
+
                                 <TouchableOpacity
                                     onPress={handleSearch}>
                                     <MaterialIcons
@@ -239,48 +317,62 @@ export default function Home({ navigation }) {
                                         color={"black"}
                                     />
                                 </TouchableOpacity>
-                            </View>
+                            </Animated.View>
+                            {
+                                searchMenu && (
+                                    <SearchItem
+                                        navigation={navigation}
+                                        searchMenu={searchMenu}
+                                        title={title}
+                                        setSearchMenu={setSearchMenu}
+                                    />
+                                )
+                            }
                         </View>
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            style={{
-                                marginVertical: 20,
-                            }}>
-                            {dataOfSites.map((item, index) => (
-                                <TouchableOpacity
-                                    key={index}
-                                    style={{
-                                        width: 80,
-                                        height: 80,
-                                        justifyContent: "center",
-                                        alignItems: "center",
-                                    }}
-                                    onPress={() => {
-                                        setTitle(item.url)
-                                        triggerCreateQuery.current = true
-                                        dispatch(queryChanging(!querysChanging))
-                                        navigation.navigate("View", {
-                                            url: item.url
-                                        })
-                                    }}
-                                >
-                                    {item.iconName ? (
-                                        <FontAwesomeIcons name={item.iconName} size={40} color={item.iconColor} />
-                                    ) : (
-                                        <Image source={item.iconImage} style={{
-                                            width: 40,
-                                            height: 40,
-                                            objectFit: "contain"
-                                        }} />
-                                    )}
-                                    <Text>
-                                        {item.title}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </ScrollView>
-                        <View>
+                        <Animated.View style={[opacityReanimatedStyle]}>
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                style={{
+                                    marginVertical: 20,
+                                }}>
+                                {dataOfSites.map((item, index) => (
+                                    <TouchableOpacity
+                                        key={index}
+                                        style={{
+                                            width: 80,
+                                            height: 80,
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                        }}
+                                        onPress={() => {
+                                            setTitle(item.url)
+                                            navigation.navigate("View", {
+                                                url: item.url
+                                            })
+                                            dispatch({
+                                                type: "querysChanging",
+                                                payload: !querysChanging
+                                            })
+                                        }}
+                                    >
+                                        {item.iconName ? (
+                                            <FontAwesomeIcons name={item.iconName} size={40} color={item.iconColor} />
+                                        ) : (
+                                            <Image source={item.iconImage} style={{
+                                                width: 40,
+                                                height: 40,
+                                                objectFit: "contain"
+                                            }} />
+                                        )}
+                                        <Text>
+                                            {item.title}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </Animated.View>
+                        <Animated.View style={[opacityReanimatedStyle]}>
                             <Text style={{
                                 color: "gray",
                                 fontSize: 13,
@@ -288,33 +380,59 @@ export default function Home({ navigation }) {
                             }}>
                                 Yaqinda foydalanilgan sitelar !
                             </Text>
-                            <View style={{
+                            <ScrollView style={{
                                 marginTop: 10,
-                            }}>
-                                <TouchableOpacity
-                                    style={{
-                                        width: 80,
-                                        height: 50,
-                                    }}>
-                                    <FontAwesomeIcons
-                                        name="instagram"
-                                        size={30}
-                                        color={"purple"}
-                                        style={{
-                                            textAlign: "center"
-                                        }} />
-                                    <Text
-                                        style={{
-                                            textAlign: "center"
-                                        }}>Instagram</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                        <View style={{
-                            height: "50%",
-                            justifyContent: "center",
-                            alignItems: 'center'
-                        }}>
+                                paddingVertical: 10,
+                            }}
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                            >
+                                {
+                                    querys.map(query => (
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                if (query.name !== "Home-Page") {
+                                                    navigation.navigate("View", {
+                                                        url: query.name
+                                                    })
+                                                }
+                                                dispatch({
+                                                    type: "querysChanging",
+                                                    payload: !querysChanging
+                                                })
+                                            }}
+                                            key={query._id}
+                                            style={{
+                                                width: 80,
+                                                height: 50,
+                                                marginRight: 10,
+                                            }}>
+                                            <View style={{
+                                                flexDirection: "row",
+                                                justifyContent: "center",
+                                                alignItems: "center"
+                                            }}>
+                                                {hasIcon(query.name)}
+                                            </View>
+                                            <Text
+                                                style={{
+                                                    textAlign: "center"
+                                                }}
+                                                numberOfLines={1}
+                                            >{query.name}</Text>
+                                        </TouchableOpacity>
+                                    ))
+                                }
+                            </ScrollView>
+                        </Animated.View>
+                        <Animated.View style={[
+                            {
+                                height: "50%",
+                                justifyContent: "center",
+                                alignItems: 'center'
+                            },
+                            opacityReanimatedStyle
+                        ]}>
                             <View
                                 style={{
                                     flexDirection: "row",
@@ -348,7 +466,7 @@ export default function Home({ navigation }) {
                                     </Text>
                                 </TouchableWithoutFeedback>
                             </View>
-                        </View>
+                        </Animated.View>
                     </View>
                 </TouchableWithoutFeedback>
             </SafeAreaView>

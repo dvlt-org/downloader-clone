@@ -1,12 +1,16 @@
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import Video from "../components/Video"
 import MaterialIcon from "react-native-vector-icons/MaterialIcons"
-import { useContext } from "react"
+import { SafeAreaView } from "react-native-safe-area-context";
 import { downloadContext } from "../context/downloadContext"
+import { useContext, useEffect } from "react"
+import Video from "../components/Video"
 
 export default function Progress({ navigation }) {
-    const { state, downloadDispatch } = useContext(downloadContext)
+    const { state, dispatch } = useContext(downloadContext)
+    const { querysChanging } = state
+    useEffect(() => {
+        console.log("query changing updated progress:", querysChanging)
+    }, [querysChanging])
     const downloadVideos = state.videos
 
     return (
@@ -18,7 +22,8 @@ export default function Progress({ navigation }) {
                 marginHorizontal: 10,
                 flexDirection: "row",
                 justifyContent: "space-between",
-                alignItems: "center"
+                alignItems: "center",
+                borderRadius: 10,
             }}>
                 <Text
                     style={{

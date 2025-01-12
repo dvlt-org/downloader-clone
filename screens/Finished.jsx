@@ -6,30 +6,39 @@ import FontIcon from "react-native-vector-icons/FontAwesome"
 
 import DotsMenuIcon from "../assets/icons/dots.png"
 import FolderLock from "../assets/icons/folderLock.png"
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import axios from 'axios'
 
-import { useSelector, useDispatch } from 'react-redux'
-import { queryChanging } from "../state/userSlice.js"
 import { DeleteFromDirectory } from "../functions/file.functions.js"
 import * as FileSystem from "expo-file-system"
 
+import generateId from "../functions/generateId.js"
+import { downloadContext } from "../context/downloadContext.js"
+
 // constants
 import { host } from '../constants/requests.js'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 export default function Finished({ navigation }) {
+    const [deleteLoading, setDeleteLoading] = useState(false)
     const [deleteItem, setDeleteItem] = useState(false)
     const [selected, setSelected] = useState([])
+    const [userId, setUserId] = useState("")
     const [files, setFiles] = useState([])
 
-    const dispatch = useDispatch()
-
-    const userId = useSelector(store => store.user.userId)
-    const queryChangingValue = useSelector(store => store.user.queryChangingValue)
-    console.log('%cUserId', userId, 'color: red;');
-    console.log('%cQuery changing', queryChangingValue, 'color: red;');
+    const { state, dispatch } = useContext(downloadContext)
+    const { querysChanging } = state
 
     useEffect(() => {
+        const getUserId = async () => {
+            const id = await AsyncStorage.getItem("user_id")
+            if (id) setUserId(id)
+            else {
+                const newId = generateId()
+                await AsyncStorage.setItem("user_id", newId)
+            }
+        }
+        getUserId()
         const getFiles = async () => {
             try {
                 const files = await axios.get(host + "/api/file/" + userId)
@@ -39,7 +48,8 @@ export default function Finished({ navigation }) {
             }
         }
         getFiles()
-    }, [queryChangingValue])
+    }, [querysChanging])
+
 
     const handleCheck = (check_id, check) => {
         if (!check) {
@@ -50,22 +60,26 @@ export default function Finished({ navigation }) {
     }
 
     const handleDelete = async () => {
+        setDeleteLoading(true)
         if (!selected) return 0;
         try {
             for (let oneSelected of selected) {
                 const oneSelectedFile = files.filter(file => file._id === oneSelected)
                 console.log("oneSelectedFile:", oneSelectedFile[0].name)
                 const res = await axios.delete(host + "/api/file/" + oneSelected)
+                console.log("handleDelete:", res.data)
                 DeleteFromDirectory(FileSystem.documentDirectory + oneSelectedFile[0].name + ".mp4")
-                console.log("we are venom:", FileSystem.documentDirectory + oneSelectedFile.name + ".mp4")
+                dispatch({
+                    type: "querysChanging",
+                    payload: !querysChanging
+                })
+                setSelected([])
+                setDeleteLoading(false)
             }
-            dispatch(queryChanging(!queryChangingValue))
         } catch (error) {
             console.log("delete error:", error)
         }
     }
-
-    console.log(files)
 
     return (
         <View>
@@ -84,6 +98,7 @@ export default function Finished({ navigation }) {
                         {deleteItem && <FontIcon onPress={() => {
                             setDeleteItem(false)
                             setSelected([])
+
                         }} name='arrow-left' size={30} />}
                         <Text
                             style={{
@@ -131,10 +146,20 @@ export default function Finished({ navigation }) {
                     marginHorizontal: 10,
                 }}>
                     {
-                        files.length > 1
+                        files.length > 0
                             ?
                             files?.map(file => (
-                                <FinishedVideo navigation={navigation} deleteMenu={deleteItem} handleCheck={handleCheck} file={file} key={file._id} id={file._id} />
+                                <FinishedVideo
+                                    navigation={navigation}
+                                    deleteMenu={deleteItem}
+                                    deleteLoading={deleteLoading}
+                                    setDeleteLoading={setDeleteLoading}
+                                    handleCheck={handleCheck}
+                                    file={file}
+                                    key={file._id}
+                                    id={file._id}
+                                    selected={selected}
+                                />
                             ))
                             :
                             <View>

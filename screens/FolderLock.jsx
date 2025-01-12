@@ -1,10 +1,10 @@
-import { SafeAreaView } from "react-native-safe-area-context"
 import { View, Text, TouchableOpacity, TouchableWithoutFeedback } from 'react-native'
-
 import MaterialIcon from "react-native-vector-icons/MaterialIcons"
-
-import * as Font from "expo-font"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { useEffect, useState } from "react"
+import * as Font from "expo-font"
+
+
 
 export default function FolderLock({ navigation }) {
     const [isLoadFont, setIsLoadFont] = useState(false)

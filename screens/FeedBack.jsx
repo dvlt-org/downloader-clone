@@ -35,6 +35,15 @@ export default function FeedBack({ navigation }) {
         <SafeAreaProvider>
             <SafeAreaView>
                 <View>
+                    {
+                        errorTitle && (
+                            <View style={{
+                                marginVertical: 10,
+                            }}>
+                                <Text>{errorTitle}</Text>
+                            </View>
+                        )
+                    }
                     <View
                         style={{
                             width: "100%",

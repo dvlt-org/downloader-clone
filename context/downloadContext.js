@@ -4,6 +4,9 @@ export const downloadContext = createContext()
 
 let initialState = {
     videos: [],
+    activeQuery: {},
+    querysChanging: false,
+    downloadProgress: {},
 }
 
 const reducer = (state, action) => {
@@ -13,16 +16,34 @@ const reducer = (state, action) => {
                 ...state,
                 videos: [...state.videos, action.payload]
             }
+        case "querysChanging":
+            return {
+                ...state,
+                querysChanging: action.payload
+            }
+        case "downloadProgress":
+            return {
+                ...state,
+                downloadProgress: {
+                    ...state.downloadProgress,
+                    [action.payload.id]: action.payload.progress
+                }
+            }
+        case "activeQueryUpdate": 
+            return {
+                ...state,
+                activeQuery: action.payload
+            }
         default:
             return state;
     }
 }
 
 export const DownloadProvider = ({ children }) => {
-    const [state, downloadDispatch] = useReducer(reducer, initialState)
+    const [state, dispatch] = useReducer(reducer, initialState)
     return (
         <downloadContext.Provider value={{
-            state, downloadDispatch
+            state, dispatch
         }}>
             {children}
         </downloadContext.Provider>

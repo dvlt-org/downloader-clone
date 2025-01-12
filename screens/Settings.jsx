@@ -8,6 +8,8 @@ export default function Settings({ navigation }) {
     const [savePassword, setSavePassword] = useState(false)
     const [onlyWifi, setOnlyWifi] = useState(false)
     const [ads, setAds] = useState(false)
+
+    
     return (
         <SafeAreaProvider>
             <SafeAreaView>

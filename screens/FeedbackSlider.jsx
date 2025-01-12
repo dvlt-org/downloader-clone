@@ -1,9 +1,9 @@
-import { Dimensions, Image } from "react-native"
+import MaterialIcons from "react-native-vector-icons/MaterialIcons"
 import { View, Text, FlatList } from "react-native"
+import { Dimensions, Image } from "react-native"
 import {
     SafeAreaView
 } from "react-native-safe-area-context"
-import MaterialIcons from "react-native-vector-icons/MaterialIcons"
 
 
 const renderItemFeedback = [

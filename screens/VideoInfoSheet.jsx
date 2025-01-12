@@ -1,20 +1,31 @@
-import { View, Text, TouchableOpacity } from "react-native"
+import { DeleteFromDirectory, MoveToFile } from "../functions/file.functions"
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    Modal,
+    TextInput,
+} from "react-native"
 import MaterialIcons from "react-native-vector-icons/MaterialIcons"
-import RenameIcon from "../assets/icons/rename.png"
+import { downloadContext } from "../context/downloadContext"
 import BrowserIcon from "../assets/icons/browser.png"
-import { Image } from "react-native"
+import RenameIcon from "../assets/icons/rename.png"
 import * as FileSystem from "expo-file-system"
-
-import { DeleteFromDirectory } from "../functions/file.functions"
-import axios from "axios"
 import { host } from "../constants/requests"
+import * as Sharing from "expo-sharing"
+import { Image } from "react-native"
+import { useContext, useState } from "react"
+import axios from "axios"
 
-import { useSelector, useDispatch } from "react-redux"
-import { queryChanging } from "../state/userSlice"
 
 export default function VidoeInfoSheet(props) {
-    const dispatch = useDispatch()
-    const queryChangingValue = useSelector(store => store.user.queryChanging)
+    const [changeNameMenu, setChangeNameMenu] = useState(false)
+    const [changeName, setChangeName] = useState("")
+
+    const { state, dispatch } = useContext(downloadContext)
+
+    const { querysChanging } = state
+
     const directory = FileSystem.documentDirectory
     const route = props.route
     const navigation = props.navigation
@@ -29,15 +40,125 @@ export default function VidoeInfoSheet(props) {
             .catch((err) => {
                 console.log("directorydan o'chirib tashlanmadi:", err)
             })
-        dispatch(queryChanging(!queryChangingValue))
-        console.log("query changed:", queryChangingValue)
-        navigation.goBack()
+        dispatch({
+            type: "querysChanging",
+            payload: !querysChanging
+        })
+        console.log("query changed:", querysChanging)
+        if (navigation.canGoBack()) {
+            navigation.goBack();
+        } else {
+            navigation.navigate('Finished'); // Asosiy ekran nomi
+        }
+    }
+
+    const handleShareVideo = async () => {
+        try {
+            await Sharing.shareAsync(directory + route.params.file.name + ".mp4")
+            console.log("video ulashildi !")
+        } catch (error) {
+            console.log("sharing video error: ", error.message)
+        }
+    }
+
+    const handleChangeName = async () => {
+        console.log("change name menu")
+        console.log("change name: ", changeName)
+        try {
+            const result = await axios.put(`${host}/api/file/${route.params.file._id}`, {
+                name: changeName
+            })
+            console.log("result: ", result.data)
+            if (result.data) {
+                MoveToFile(directory + route.params.file.name + ".mp4", directory + changeName + ".mp4")
+
+                dispatch({
+                    type: "querysChanging",
+                    payload: !querysChanging
+                })
+                if (navigation.canGoBack()) {
+                    navigation.goBack();
+                } else {
+                    navigation.navigate('Finished'); // Asosiy ekran nomi
+                }
+            }
+        } catch (error) {
+            console.log("video info error: ", error.message)
+        }
     }
 
     return (
         <View style={{
             padding: 30,
         }}>
+            <Modal
+                transparent={true}
+                visible={changeNameMenu}
+                animationType="fade"
+                onRequestClose={changeNameMenu}
+                style={{
+                    position: "relative",
+                }}
+            >
+                <View
+                    style={{
+                        flex: 1,
+                        justifyContent: "center",
+                        alignItems: "center",
+                    }}
+                >
+                    <View style={{
+                        width: 200,
+                        height: changeName.length > 0 ? 125 : 100,
+                        backgroundColor: "#efefef",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        borderRadius: 5,
+                    }}>
+                        <View
+                            style={{
+                                paddingVertical: 20,
+                                paddingHorizontal: 10,
+                            }}
+                        >
+                            <MaterialIcons name="close" size={25} color={"gray"}
+                                style={{
+                                    position: "absolute",
+                                    top: 0,
+                                    right: 0,
+                                }}
+                                onPress={() => {
+                                    setChangeNameMenu(false)
+                                    setChangeName("")
+                                }}
+                            />
+                            <TextInput
+                                placeholder="Yangi nomni kiriting !"
+                                style={{
+                                    borderStyle: "solid",
+                                    borderBottomColor: "black",
+                                    borderBottomWidth: 1,
+                                }}
+                                onChangeText={(text) => setChangeName(text)}
+                            />
+                            {
+                                changeName.length > 0 && (
+                                    <TouchableOpacity
+                                        style={{
+                                            marginVertical: 10,
+                                        }}
+                                        onPress={handleChangeName}
+                                    >
+                                        <Text style={{
+                                            textAlign: "center",
+                                        }}>O'zgartirish</Text>
+                                    </TouchableOpacity>
+                                )
+                            }
+                        </View>
+                    </View>
+                </View>
+            </Modal>
             <Text style={{
                 fontSize: 30,
             }}>{route.params.file.name}.mp4</Text>
@@ -67,7 +188,9 @@ export default function VidoeInfoSheet(props) {
                     flexDirection: 'row',
                     marginBottom: 20,
                     alignItems: "center"
-                }}>
+                }}
+                    onPress={handleShareVideo}
+                >
                     <MaterialIcons name="share" size={30} />
                     <Text style={{
                         fontSize: 16,
@@ -80,7 +203,9 @@ export default function VidoeInfoSheet(props) {
                     flexDirection: 'row',
                     marginBottom: 20,
                     alignItems: "center"
-                }}>
+                }}
+                    onPress={() => setChangeNameMenu(true)}
+                >
                     <Image source={RenameIcon} style={{
                         width: 30,
                         height: 30,
